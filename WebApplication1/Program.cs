@@ -61,10 +61,10 @@ app.MapDelete("/users/deleteUser/{id}", (DataContext context, int id) =>
     }
     else
     {
-        return Results.NotFound();
+        return Results.NotFound("User not found");
     }
 
-    return Results.Ok(user);
+    return Results.Ok("User: " + user.Name + " deleted");
 
 
 });
@@ -73,14 +73,19 @@ app.MapPost("/users/addUser/", async (DataContext context, UserModel user) =>
 {
     try
     {
+        var checkUser = context.UsersDb.FirstOrDefaultAsync(u => u.Username == user.Username);
+        if(checkUser == null)
+        {
+            return Results.BadRequest("Username: " + user.Username + " already exist");
+        }
         context.UsersDb.Add(user);
         await context.SaveChangesAsync();
 
-        return Results.Ok(context.UsersDb.ToListAsync());
+        return Results.Ok("User created");
 
     }catch(Exception ex)
     {
-        return Results.BadRequest();
+        return Results.BadRequest(ex.Message);
     }
    
 });
@@ -91,14 +96,10 @@ app.MapPut("/users/EditUser/", async (DataContext context , UserModel user ) =>
 
     if(dbUser == null) return Results.NotFound("user not found");
 
-  
-
         context.Entry(user).State = EntityState.Modified;
         await context.SaveChangesAsync();
 
         return Results.Ok(user);
-    
-
 
 });
 
